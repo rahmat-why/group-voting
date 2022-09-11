@@ -8,7 +8,7 @@ export const sendMessage = async(receiver, content_text) => {
         'method': 'POST',
         'url': 'https://api.angel-ping.my.id/chats/send-group',
         'headers': {
-            'angel-key': 'ECOM.c9dc7e29c8dg44e30F',
+            'angel-key': 'ECOM.c9dc7e39c892544e815',
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
