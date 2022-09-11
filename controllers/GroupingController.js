@@ -4,7 +4,7 @@ import { Sequelize, QueryTypes } from'sequelize'
 import { sendMessage } from './WhatsappController.js'
 
 // model
-import { Groups, Collections, CollectionMembers, Customers, Events } from "../models/GroupingModel.js";
+import { Groups, Collections, CollectionMembers, Customers, Events, States, Messages } from "../models/GroupingModel.js";
 
 const now = new Date();
 const execute = async (group, text, customer) => {
@@ -57,10 +57,7 @@ const rulesExistGroup = async(group, text) => {
 }
 
 const showGroup = async(group_id) => {
-    const groups = await database.query("SELECT * FROM `groups` WHERE group_id = :group_id", { 
-        type: QueryTypes.SELECT,
-        replacements: { group_id: group_id }
-    });
+    const groups = await Groups.findAll({ where: { group_id } })
 
     return groups[0]
 }
@@ -85,28 +82,19 @@ const updateGroup = async(group_id, update) => {
 }
 
 const showStateOption = async(option) => {
-    const states = await database.query("SELECT * FROM `states` WHERE option = :option", { 
-        type: QueryTypes.SELECT,
-        replacements: { option: option }
-    });
+    const states = await States.findAll({ where: { option } })
 
     return states[0]
 }
 
 const showStateType = async(state_type) => {
-    const states = await database.query("SELECT * FROM `states` WHERE state_type = :state_type", { 
-        type: QueryTypes.SELECT,
-        replacements: { state_type: state_type }
-    });
+    const states = await States.findAll({ where: { state_type } })
 
     return states[0]
 }
 
 const showMessage = async(message_id) => {
-    const messages = await database.query("SELECT * FROM `messages` WHERE message_id = :message_id", { 
-        type: QueryTypes.SELECT,
-        replacements: { message_id: message_id }
-    });
+    const messages = await Messages.findAll({ where: { message_id } })
 
     return JSON.parse(messages[0].content)
 }
@@ -137,10 +125,7 @@ const handleInvalidOption = async(option, option_value, customer, group) => {
         is_error: false
     }
 
-    const customers = await database.query("SELECT * FROM `customers` WHERE telp = :telp", { 
-        type: QueryTypes.SELECT,
-        replacements: { telp: telp }
-    });
+    const customers = await Customers.findAll({ where: { telp } })
 
     if (customers.length === 0) {
         await storeCustomer(telp, null, push_name)
@@ -250,25 +235,24 @@ const showCollectionId = async(event_id, collection_number) => {
 }
 
 const showCollectionEvent = async(event_id) => {
-    const collections_event = await database.query("SELECT * FROM `collections` WHERE event_id = :event_id ORDER BY collection_number ASC", { 
-        type: QueryTypes.SELECT,
-        replacements: { 
-            event_id: event_id
-        }
-    });
+    const collections_event = await Collections.findAll({ where: { event_id }, order: [[ "collection_number", "ASC" ]] })
 
     return collections_event
 }
 
 const showCollectionMember = async(collection_id) => {
-    const collection_members = await database.query("SELECT * FROM `collection_members` JOIN `customers` ON customers.telp = collection_members.telp WHERE collection_id = :collection_id ORDER BY collection_members.createdAt ASC", { 
-        type: QueryTypes.SELECT,
-        replacements: { 
-            collection_id: collection_id
-        }
+    const collection_members = await CollectionMembers.findAll({ where: { collection_id }, include: [{ model: Customers }], order: [[ "createdAt", "ASC" ]] })
+
+    // https://stackoverflow.com/a/41512504
+    collection_members.forEach(obj => { 
+        Object.keys(obj.toJSON()).forEach(k => {
+            if (typeof obj[k] === 'object') {       
+                Object.keys(obj[k]).forEach(j => obj[j] = obj[k][j]);
+            }
+        });
     });
 
-    return collection_members
+    return JSON.parse(JSON.stringify(collection_members)) // supaya push_name tidak undefined
 }
 
 const storeCollection = async(event_id, group_id, collection_name) => {
@@ -368,31 +352,20 @@ const storeCustomer = async(telp, profile_picture, push_name) => {
 
 const pregMessage = async(event_id, collection_id, telp, message) => {
     var message = JSON.stringify(message)
-    const events = await database.query("SELECT * FROM `events` WHERE event_id = :event_id", { 
-        type: QueryTypes.SELECT,
-        replacements: { event_id: event_id }
-    });
+    const events = await Events.findAll({ where: { event_id } })
     if (events.length > 0) {
         var message = message.replace(/%event_name%/, events[0].event_name);
     }
     
-    const customers = await database.query("SELECT * FROM `customers` WHERE telp = :telp", { 
-        type: QueryTypes.SELECT,
-        replacements: { 
-            telp: telp
-        }
-    });
+    const customers = await Customers.findAll({ where: { telp } })
+
     if (customers.length > 0) {
         var message = message.replace(/%telp%/, customers[0].telp);
         var message = message.replace(/%push_name%/, customers[0].push_name);
     }
 
-    const collections = await database.query("SELECT * FROM `collections` WHERE id = :collection_id", { 
-        type: QueryTypes.SELECT,
-        replacements: { 
-            collection_id: collection_id
-        }
-    });
+    const collections = await Collections.findAll({ where: { id: collection_id } })
+
     if (collections.length > 0) {
         var message = message.replace(/%collection_name%/, collections[0].collection_name);
     }

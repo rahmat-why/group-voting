@@ -78,6 +78,11 @@ const LogWebhooks = database.define('log_webhooks', {
   from: Sequelize.STRING
 });
 
+Collections.hasMany(CollectionMembers, { foreignKey: "collection_id" })
+CollectionMembers.belongsTo(Collections, { foreignKey: "collection_id" })
+Customers.hasMany(CollectionMembers, { foreignKey: "telp" })
+CollectionMembers.belongsTo(Customers, { foreignKey: "telp" })
+
 export {
     Collections,
     CollectionMembers,
