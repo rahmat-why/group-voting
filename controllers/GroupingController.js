@@ -269,11 +269,11 @@ const storeCollection = async(event_id, group_id, collection_name) => {
     return store_collection.dataValues
 }
 
-const clearCollectionMember = async(event_id, telp) => {
+const clearCollectionMember = async(event_id, collection_number) => {
     const collection_members = await Collections.findAll({
         where: {
             event_id: event_id,
-            telp: telp
+            collection_number
         },
         include: [{
             model: CollectionMembers,
@@ -296,7 +296,7 @@ const clearCollectionMember = async(event_id, telp) => {
 const storeCollectionMember = async(telp, collection_number, event_id) => {
     const collection_id = await showCollectionId(event_id, collection_number)
     if (collection_id !== undefined) {
-        await clearCollectionMember(event_id, telp)
+        await clearCollectionMember(event_id, collection_number)
     }
     const store_collection_member = await CollectionMembers.create({
         telp: telp,
