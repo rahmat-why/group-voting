@@ -30,7 +30,7 @@ const execute = async (group, text, customer) => {
     let receiver = group
     for(let i in show_message) {
         var content_text = await pregMessage(execute_option.event_id, execute_option.collection_id, customer.telp, show_message[i].content_text)
-        // await sendMessage(receiver, content_text)
+        await sendMessage(receiver, content_text)
         console.log({receiver, content_text})
     }
 
@@ -214,7 +214,7 @@ const executeAlert = async(group, state_type, event_id, telp) => {
 
     for(let i in show_message) {
         var content_text = await pregMessage(event_id, null, telp, show_message[i].content_text)
-        // await sendMessage(receiver, content_text)
+        await sendMessage(receiver, content_text)
         console.log('message inside a loop')
         console.log({receiver, content_text})
     }
@@ -272,38 +272,10 @@ const storeCollection = async(event_id, group_id, collection_name) => {
     return store_collection.dataValues
 }
 
-const clearCollectionMember = async(event_id, collection_number) => {
-    const collections = await Collections.findAll({
-        where: {
-            event_id: event_id,
-            collection_number
-        },
-        include: [{
-            model: CollectionMembers,
-            required: true
-        }]
-    })
-
-    // lihat contoh response collections: https://www.paste.org/122649
-    const collectionMembers = collections[0].collection_members[0]
-    
-    if (collectionMembers) {
-        await CollectionMembers.destroy({
-            where: {
-                telp: collectionMembers.telp,
-                collection_id: collectionMembers.collection_id
-            }
-        });
-    }
-
-    return 1
-}
-
 const storeCollectionMember = async(telp, collection_number, event_id) => {
     const collection_id = await showCollectionId(event_id, collection_number)
-    if (collection_id !== undefined) {
-        await clearCollectionMember(event_id, collection_number)
-    }
+
+    // ganti jadi update or insert aja mas, primary key nya telp dan event id, collection join ke collection member
     const store_collection_member = await CollectionMembers.create({
         telp: telp,
         collection_id: collection_id
@@ -382,14 +354,10 @@ const pregMessage = async(event_id, collection_id, telp, message) => {
         result += collections_event[i].collection_number+". "+collections_event[i].collection_name+"\\n"
         
         const show_collection_member = await showCollectionMember(collections_event[i].id)
-        if (show_collection_member.length === 0) {
-            result += "-"
-        }
 
         for (let j = 0; j < show_collection_member.length; j++) {
             result += "- @"+show_collection_member[j].telp+" - "+show_collection_member[j].push_name
         }
-        result += '\\n*Total: '+show_collection_member.length+'*\\n\\n'
     }
     var message = message.replace(/%result%/, result);
     var message = JSON.parse(message)
