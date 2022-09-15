@@ -30,7 +30,8 @@ const execute = async (group, text, customer) => {
     let receiver = group
     for(let i in show_message) {
         var content_text = await pregMessage(execute_option.event_id, execute_option.collection_id, customer.telp, show_message[i].content_text)
-        await sendMessage(receiver, content_text)
+        // await sendMessage(receiver, content_text)
+        console.log({receiver, content_text})
     }
 
     return 1;
@@ -213,7 +214,9 @@ const executeAlert = async(group, state_type, event_id, telp) => {
 
     for(let i in show_message) {
         var content_text = await pregMessage(event_id, null, telp, show_message[i].content_text)
-        await sendMessage(receiver, content_text)
+        // await sendMessage(receiver, content_text)
+        console.log('message inside a loop')
+        console.log({receiver, content_text})
     }
 
     return 1
@@ -270,7 +273,7 @@ const storeCollection = async(event_id, group_id, collection_name) => {
 }
 
 const clearCollectionMember = async(event_id, collection_number) => {
-    const collection_members = await Collections.findAll({
+    const collections = await Collections.findAll({
         where: {
             event_id: event_id,
             collection_number
@@ -280,12 +283,15 @@ const clearCollectionMember = async(event_id, collection_number) => {
             required: true
         }]
     })
+
+    // lihat contoh response collections: https://www.paste.org/122649
+    const collectionMembers = collections[0].collection_members[0]
     
-    if (collection_members.length > 0) {
+    if (collectionMembers) {
         await CollectionMembers.destroy({
             where: {
-                telp: collection_members[0].telp,
-                collection_id: collection_members[0].collection_id
+                telp: collectionMembers.telp,
+                collection_id: collectionMembers.collection_id
             }
         });
     }
