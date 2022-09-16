@@ -5,6 +5,7 @@ import { sendMessage } from './WhatsappController.js'
 
 // model
 import { Groups, Collections, CollectionMembers, Customers, Events, States, Messages } from "../models/GroupingModel.js";
+import { Op } from 'sequelize';
 
 const now = new Date();
 const execute = async (group, text, customer) => {
@@ -269,41 +270,18 @@ const storeCollection = async(event_id, group_id, collection_name) => {
     return store_collection.dataValues
 }
 
-const clearCollectionMember = async(event_id, collection_number) => {
-    const collection_members = await Collections.findAll({
-        where: {
-            event_id: event_id,
-            collection_number
-        },
-        include: [{
-            model: CollectionMembers,
-            required: true
-        }]
-    })
-    
-    if (collection_members.length > 0) {
-        await CollectionMembers.destroy({
-            where: {
-                telp: collection_members[0].telp,
-                collection_id: collection_members[0].collection_id
-            }
-        });
-    }
-
-    return 1
-}
-
 const storeCollectionMember = async(telp, collection_number, event_id) => {
-    const collection_id = await showCollectionId(event_id, collection_number)
-    if (collection_id !== undefined) {
-        await clearCollectionMember(event_id, collection_number)
-    }
-    const store_collection_member = await CollectionMembers.create({
-        telp: telp,
-        collection_id: collection_id
+    const collections = await Collections.findAll({ where: { event_id } })
+    const collectionIds = collections.map((c) => c.dataValues.id)
+
+    const collectionMember = await CollectionMembers.findOne({
+        where: { telp, collection_id: { [Op.or]: collectionIds } }
     })
-    
-    return store_collection_member.dataValues
+    const { dataValues: { id: newId } } = collections.find((c) => c.dataValues.collection_number == collection_number)
+
+    return collectionMember 
+        ? collectionMember.update({ collection_id: newId })
+        : CollectionMembers.create({ telp, collection_id: newId })        
 }
 
 const storeEvent = async(group, event_name, close_at, telp) => {
