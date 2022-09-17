@@ -7,7 +7,7 @@ import cors from 'cors'
 const app = express()
 
 const host = process.env.HOST || undefined
-const port = parseInt(process.env.PORT ?? 8000)
+const port = parseInt(process.env.PORT ?? 8001)
 
 const corsOptions = {
     credentials: true,

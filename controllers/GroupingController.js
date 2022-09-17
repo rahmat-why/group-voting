@@ -145,6 +145,7 @@ const handleInvalidOption = async(option, option_value, customer, group) => {
         return response
     }
 
+    const authority_option = ["/opsi", "/close"]
     if (option === "/voting") {
         if (show_running_event !== undefined) {
             response.is_error = true
@@ -158,7 +159,7 @@ const handleInvalidOption = async(option, option_value, customer, group) => {
             response.is_error = true
             await executeAlert(group, "ALERT_NOT_EXIST_COLLECTION", event_id, telp)
         }
-    }else if(option === "/opsi") {
+    }else if(authority_option.includes(option)) {
         if (show_running_event.created_by !== telp) {
             response.is_error = true
             await executeAlert(group, "ALERT_NOT_AUTHORITY_EVENT", show_running_event.event_id, telp)
@@ -351,15 +352,15 @@ const pregMessage = async(event_id, collection_id, telp, message) => {
     const collections_event = await showCollectionEvent(event_id)
     var result = ""
     for (let i = 0; i < collections_event.length; i++) {
-        result += collections_event[i].collection_number+". "+collections_event[i].collection_name+"\\n"
+        result += collections_event[i].collection_number+". "+collections_event[i].collection_name
         
         const show_collection_member = await showCollectionMember(collections_event[i].id)
         if (show_collection_member.length === 0) {
-            result += "-"
+            result += "\\n-"
         }
 
         for (let j = 0; j < show_collection_member.length; j++) {
-            result += "- @"+show_collection_member[j].telp+" - "+show_collection_member[j].push_name
+            result += "\\n- @"+show_collection_member[j].telp+" | "+show_collection_member[j].push_name
         }
         result += '\\n*Total: '+show_collection_member.length+'*\\n\\n'
     }
