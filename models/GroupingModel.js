@@ -19,7 +19,8 @@ const CollectionMembers = database.define('collection_members', {
       primaryKey: true,
       type: Sequelize.STRING,
     },
-    collection_id: Sequelize.STRING
+    collection_id: Sequelize.STRING,
+    event_id: Sequelize.STRING
 });
 
 const Customers = database.define('customers', {

@@ -272,17 +272,27 @@ const storeCollection = async(event_id, group_id, collection_name) => {
 }
 
 const storeCollectionMember = async(telp, collection_number, event_id) => {
-    const collections = await Collections.findAll({ where: { event_id } })
-    const collectionIds = collections.map((c) => c.dataValues.id)
-
-    const collectionMember = await CollectionMembers.findOne({
-        where: { telp, collection_id: { [Op.or]: collectionIds } }
+    var current_collections = await Collections.findOne({
+        where: {
+            event_id: event_id,
+            collection_number: collection_number
+        }
+    });
+    
+    await CollectionMembers.destroy({
+        where: {
+            telp: telp,
+            event_id: event_id
+        }
     })
-    const { dataValues: { id: newId } } = collections.find((c) => c.dataValues.collection_number == collection_number)
 
-    return collectionMember 
-        ? collectionMember.update({ collection_id: newId })
-        : CollectionMembers.create({ telp, collection_id: newId })        
+    const store_collection_member = await CollectionMembers.create({
+        telp: telp,
+        collection_id: current_collections.id,
+        event_id: event_id
+    })
+
+    return store_collection_member
 }
 
 const storeEvent = async(group, event_name, close_at, telp) => {
