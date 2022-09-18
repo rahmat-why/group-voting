@@ -40,7 +40,7 @@ export const webhook = async(req, res) => {
 
     const json = req.body
     const group_id = json.key.groupId
-    const telp = json.key.telp
+    const telp = json.key.telp.split("@")[0]
     const name = json.key.name
     const message = json.key.message
     const customer = {
